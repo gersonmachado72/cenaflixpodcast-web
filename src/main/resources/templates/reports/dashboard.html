@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Relatórios - Cenaflix Podcast</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-podcast me-2"></i>Cenaflix Podcast - Relatórios
+            </a>
+            <div class="d-flex">
+                <a class="btn btn-outline-light btn-sm" href="/dashboard">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar ao Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Dashboard de Estatísticas</h4>
+            </div>
+            
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h1 th:text="${stats.totalPodcasts}">0</h1>
+                                <p class="mb-0">Total de Podcasts</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h1 th:text="${stats.totalEpisodes}">0</h1>
+                                <p class="mb-0">Total de Episódios</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h1 th:text="${stats.averageDuration}">00:00</h1>
+                                <p class="mb-0">Duração Média</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h1 th:text="${#maps.size(stats.podcastsByProducer)}">0</h1>
+                                <p class="mb-0">Produtores</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Produtores -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Top Produtores</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group">
+                                    <div th:each="produtor : ${stats.topProducers}" 
+                                         class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span th:text="${produtor}">Produtor</span>
+                                        </div>
+                                        <span class="badge bg-success" 
+                                              th:text="${stats.podcastsByProducer[produtor]} + ' podcasts'">
+                                            0 podcasts
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Estatísticas Mensais -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Estatísticas dos Últimos 6 Meses</h5>
+                            </div>
+                            <div class="card-body">
+                                <div th:if="${not #maps.isEmpty(stats.monthlyStats)}">
+                                    <div th:each="entry : ${stats.monthlyStats}" class="mb-2">
+                                        <div class="d-flex justify-content-between">
+                                            <small th:text="${entry.key}">Mês</small>
+                                            <small th:text="${entry.value} + ' podcasts'">0 podcasts</small>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar" 
+                                                 th:style="'width: ' + ${entry.value / stats.totalPodcasts * 100} + '%;'"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div th:if="${#maps.isEmpty(stats.monthlyStats)}" class="text-center text-muted">
+                                    <small>Sem dados mensais disponíveis</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Distribuição por Produtor -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Distribuição por Produtor</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Produtor</th>
+                                                <th>Total de Podcasts</th>
+                                                <th>Percentual</th>
+                                                <th>Progresso</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:each="entry : ${stats.podcastsByProducer}">
+                                                <td th:text="${entry.key}">Produtor</td>
+                                                <td th:text="${entry.value}">0</td>
+                                                <td>
+                                                    <span th:if="${stats.totalPodcasts > 0}">
+                                                        <span th:text="${#numbers.formatDecimal(entry.value / stats.totalPodcasts * 100, 1, 1)} + '%'">0%</span>
+                                                    </span>
+                                                    <span th:unless="${stats.totalPodcasts > 0}">
+                                                        0%
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="progress" style="height: 10px;">
+                                                        <div class="progress-bar" 
+                                                             th:if="${stats.totalPodcasts > 0}"
+                                                             th:style="'width: ' + ${entry.value / stats.totalPodcasts * 100} + '%;'"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        Gerado em: <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm:ss')}"></span>
+                    </small>
+                    <a class="btn btn-outline-secondary" href="/dashboard">
+                        <i class="fas fa-arrow-left me-1"></i>Voltar ao Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

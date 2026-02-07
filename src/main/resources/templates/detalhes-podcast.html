@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalhes do Podcast</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-top: 20px; }
+        .field { margin-bottom: 15px; }
+        .label { font-weight: bold; color: #555; }
+        .value { color: #333; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Detalhes do Podcast</h1>
+        
+        <div class="card">
+            <div class="field">
+                <div class="label">Nome do Episódio:</div>
+                <div class="value" th:text="${podcast.nomeEpisodio}">Nome</div>
+            </div>
+            
+            <div class="field">
+                <div class="label">Número do Episódio:</div>
+                <div class="value" th:text="${podcast.numeroEpisodio}">Número</div>
+            </div>
+            
+            <div class="field">
+                <div class="label">Produtor:</div>
+                <div class="value" th:text="${podcast.produtor}">Produtor</div>
+            </div>
+            
+            <div class="field">
+                <div class="label">Duração:</div>
+                <div class="value" th:text="${podcast.duracao}">Duração</div>
+            </div>
+            
+            <div class="field">
+                <div class="label">Data de Criação:</div>
+                <div class="value" th:text="${#temporals.format(podcast.dataCriacao, 'dd/MM/yyyy')}">Data</div>
+            </div>
+            
+            <div class="field">
+                <div class="label">URL do Repositório:</div>
+                <div class="value">
+                    <a th:href="${podcast.urlRepositorio}" th:text="${podcast.urlRepositorio}" target="_blank">URL</a>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <a th:href="@{/podcasts/editar/{id}(id=${podcast.id})}" class="btn btn-primary">Editar</a>
+            <a th:href="@{/podcasts/listar}" class="btn btn-secondary">Voltar</a>
+        </div>
+    </div>
+</body>
+</html>

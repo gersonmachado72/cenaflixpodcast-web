@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload de Arquivo</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #495057;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px 5px 0 0;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .menu {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .file-upload {
+            border: 2px dashed #007bff;
+            padding: 40px;
+            text-align: center;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            transition: all 0.3s;
+        }
+        .file-upload:hover {
+            background-color: #e7f3ff;
+            border-color: #0056b3;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .file-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 Upload de Arquivo</h1>
+        
+        <div class="menu">
+            <a href="/arquivo/listar" class="btn btn-secondary">↩️ Voltar para Lista</a>
+            <a href="/dashboard" class="btn btn-primary">🏠 Dashboard</a>
+        </div>
+        
+        <!-- Mensagens de sucesso/erro -->
+        <div th:if="${sucesso}" class="alert alert-success" th:text="${sucesso}"></div>
+        <div th:if="${erro}" class="alert alert-danger" th:text="${erro}"></div>
+        
+        <form th:action="@{/arquivo/upload}" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="arquivo">Selecione o arquivo:</label>
+                <div class="file-upload">
+                    <p>📁 Arraste e solte o arquivo aqui</p>
+                    <p>ou</p>
+                    <input type="file" id="arquivo" name="arquivo" required
+                           onchange="showFileInfo(this)">
+                    <div id="fileInfo" class="file-info"></div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="descricao">Descrição (opcional):</label>
+                <textarea id="descricao" name="descricao" rows="3" 
+                         placeholder="Descreva o conteúdo ou propósito deste arquivo..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="tipo">Tipo de Arquivo:</label>
+                <select id="tipo" name="tipo" disabled>
+                    <option value="">Será detectado automaticamente</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-success">📤 Fazer Upload</button>
+            <a href="/arquivo/listar" class="btn btn-secondary">Cancelar</a>
+        </form>
+        
+        <div style="margin-top: 30px;">
+            <h3>📊 Tipos de Arquivo Suportados:</h3>
+            <ul>
+                <li><strong>Áudio:</strong> MP3, WAV, OGG (até 100MB)</li>
+                <li><strong>Imagens:</strong> JPG, PNG, GIF, WebP (até 20MB)</li>
+                <li><strong>Documentos:</strong> PDF, DOC, DOCX, TXT (até 50MB)</li>
+                <li><strong>Outros:</strong> ZIP, RAR (até 200MB)</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        function showFileInfo(input) {
+            const fileInfo = document.getElementById('fileInfo');
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const fileSize = file.size > 1024 * 1024 
+                    ? (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+                    : (file.size / 1024).toFixed(2) + ' KB';
+                
+                fileInfo.innerHTML = `
+                    <strong>Arquivo selecionado:</strong> ${file.name}<br>
+                    <strong>Tamanho:</strong> ${fileSize}<br>
+                    <strong>Tipo:</strong> ${file.type || 'Desconhecido'}
+                `;
+            } else {
+                fileInfo.innerHTML = '';
+            }
+        }
+        
+        // Permitir drag and drop
+        const dropArea = document.querySelector('.file-upload');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropArea.style.backgroundColor = '#e7f3ff';
+            dropArea.style.borderColor = '#0056b3';
+        }
+        
+        function unhighlight() {
+            dropArea.style.backgroundColor = '#f8f9fa';
+            dropArea.style.borderColor = '#007bff';
+        }
+        
+        dropArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            const input = document.getElementById('arquivo');
+            
+            if (files.length) {
+                input.files = files;
+                showFileInfo(input);
+            }
+        }
+    </script>
+</body>
+</html>
