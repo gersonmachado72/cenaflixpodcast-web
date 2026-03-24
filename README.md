@@ -179,6 +179,23 @@ Preencha o formulário
 
 Selecione o perfil adequado
 
+## 🌐 Acesse a Aplicação Online
+
+O projeto está disponível publicamente através do **Railway** (plataforma de hospedagem na nuvem).
+
+🔗 **Link do Sistema:**  
+[https://cenaflixpodcast-web.up.railway.app](https://cenaflixpodcast-web.up.railway.app)
+
+### 🔐 Credenciais de Acesso
+
+| Perfil | Usuário | Senha |
+|--------|---------|-------|
+| **Administrador** | `admin` | `admin123` |
+| **Editor** | `editor` | `editor123` |
+| **Visualizador** | `user` | `user123` |
+
+> ℹ️ **Nota:** O aplicativo roda no plano gratuito do Railway. Pode haver um breve atraso no primeiro acesso (cold start) após períodos de inatividade.
+
 🎙️ Configuração de Podcasts
 Formatos suportados:
 
