@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -79,14 +79,14 @@
                                 <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show">
                                     <i class="fas fa-exclamation-triangle me-2"></i>
                                     Usuário ou senha inválidos!
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
                                 </div>
 
                                 <!-- Mensagem de logout -->
                                 <div th:if="${param.logout}" class="alert alert-success alert-dismissible fade show">
                                     <i class="fas fa-check-circle me-2"></i>
                                     Você foi desconectado com sucesso!
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
                                 </div>
 
                                 <div class="d-grid mt-4">
