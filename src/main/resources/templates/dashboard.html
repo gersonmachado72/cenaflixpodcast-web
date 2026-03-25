@@ -198,9 +198,16 @@
                                 <small>Logado como: <span sec:authentication="name"></span></small>
                             </span></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" th:href="@{/perfil}">
-                                <i class="fas fa-user me-2"></i>Perfil
-                            </a></li>
+                        <li sec:authorize="hasAnyRole('ADMIN', 'EDITOR')">
+    <a class="dropdown-item" th:href="@{/usuarios/editar/{id}(id=${#authentication.principal.id})}">
+        <i class="fas fa-user me-2"></i>Meu Perfil
+    </a>
+</li>
+<li sec:authorize="hasRole('VISUALIZADOR')">
+    <a class="dropdown-item disabled" href="#" tabindex="-1" aria-disabled="true">
+        <i class="fas fa-user me-2"></i>Visualizador
+    </a>
+</li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <form th:action="@{/logout}" method="post">
