@@ -1,71 +1,185 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Cenaflix Podcast - Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* ========== SIDEBAR RESPONSIVA ========== */
         .sidebar {
             min-height: calc(100vh - 56px);
             background: linear-gradient(180deg, #343a40 0%, #212529 100%);
             position: fixed;
             width: 250px;
-            left: 0;
+            left: -250px;
             top: 56px;
             overflow-y: auto;
+            transition: left 0.3s ease;
+            z-index: 1000;
         }
+        
+        .sidebar.active {
+            left: 0;
+        }
+        
         .main-content {
-            margin-left: 250px;
+            margin-left: 0;
             margin-top: 56px;
             padding: 20px;
+            transition: margin-left 0.3s ease;
         }
+        
+        /* Botão de toggle do menu */
+        .menu-toggle {
+            position: fixed;
+            left: 10px;
+            top: 70px;
+            z-index: 1001;
+            background: #343a40;
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+        
+        .menu-toggle:hover {
+            background: #007bff;
+            transform: scale(1.05);
+        }
+        
         .sidebar .nav-link {
             color: #adb5bd;
             padding: 12px 20px;
             border-left: 3px solid transparent;
             transition: all 0.3s;
         }
+        
         .sidebar .nav-link:hover {
             color: #fff;
             background: rgba(255,255,255,0.1);
             border-left: 3px solid #007bff;
         }
+        
         .sidebar .nav-link.active {
             color: #fff;
             background: rgba(0,123,255,0.1);
             border-left: 3px solid #007bff;
         }
+        
+        .sidebar .nav-section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #6c757d;
+            padding: 12px 20px 4px 20px;
+            display: block;
+        }
+        
+        /* Cards de estatísticas */
         .stat-card {
             border-radius: 10px;
             transition: transform 0.3s;
             border: none;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+        
         .stat-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
+        
         .stat-icon {
             font-size: 2.5rem;
             opacity: 0.8;
         }
+        
         .table-hover tbody tr:hover {
             background-color: rgba(0,123,255,0.05);
         }
+        
         .btn-action {
             padding: 0.25rem 0.5rem;
             font-size: 0.875rem;
             margin: 2px;
         }
+        
         .navbar-brand {
             font-weight: 600;
+        }
+        
+        /* Overlay para fechar menu em mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        
+        .sidebar-overlay.active {
+            display: block;
+        }
+        
+        /* Responsividade */
+        @media (min-width: 992px) {
+            .sidebar {
+                left: 0;
+            }
+            .main-content {
+                margin-left: 250px;
+            }
+            .menu-toggle {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 991px) {
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        /* ========== PROGRESS BAR ========== */
+        .progress {
+            height: 5px;
+            border-radius: 4px;
+            background-color: #e9ecef;
+        }
+        
+        .progress-bar {
+            background-color: #667eea;
+            transition: width 0.1s linear;
+        }
+        
+        /* ========== BOTÕES ========== */
+        .gap-2 {
+            gap: 0.5rem;
+        }
+        
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
         }
     </style>
 </head>
 <body>
+    <!-- Overlay para fechar menu em mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    
+    <!-- Botão de toggle do menu (mobile) -->
+    <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+    
     <!-- Navbar Superior -->
     <nav class="navbar navbar-dark bg-dark shadow-sm fixed-top">
         <div class="container-fluid">
@@ -81,18 +195,15 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><span class="dropdown-item-text text-muted">
-                            <small>Logado como: <span sec:authentication="name"></span></small>
-                        </span></li>
+                                <small>Logado como: <span sec:authentication="name"></span></small>
+                            </span></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">
-                            <i class="fas fa-user me-2"></i>Perfil
-                        </a></li>
-                        <li><a class="dropdown-item" href="#">
-                            <i class="fas fa-cog me-2"></i>Configurações
-                        </a></li>
+                        <li><a class="dropdown-item" th:href="@{/perfil}">
+                                <i class="fas fa-user me-2"></i>Perfil
+                            </a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <form th:action="@{/logout}" method="post" style="display: inline;">
+                            <form th:action="@{/logout}" method="post">
                                 <button type="submit" class="dropdown-item text-danger">
                                     <i class="fas fa-sign-out-alt me-2"></i>Sair
                                 </button>
@@ -105,7 +216,7 @@
     </nav>
 
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <nav class="nav flex-column pt-3">
             <a class="nav-link active" th:href="@{/dashboard}">
                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
@@ -116,34 +227,15 @@
             <a class="nav-link" th:href="@{/arquivo}">
                 <i class="fas fa-file-audio me-2"></i>Arquivos
             </a>
-            <a class="nav-link" th:href="@{/usuarios}">
+            <!-- USUÁRIOS: Só aparece para ADMIN -->
+            <a class="nav-link" th:href="@{/usuarios}" sec:authorize="hasRole('ADMIN')">
                 <i class="fas fa-users me-2"></i>Usuários
-            </a>
-            
-            <li class="nav-item mt-3">
-                <small class="text-uppercase text-muted ms-3">Relatórios</small>
-            </li>
-            <a class="nav-link" th:href="@{/reports/dashboard}" sec:authorize="hasRole('ADMIN')">
-                <i class="fas fa-chart-line me-2"></i>Dashboard Stats
-            </a>
-            <a class="nav-link" th:href="@{/reports/monthly}" sec:authorize="hasRole('ADMIN')">
-                <i class="fas fa-calendar-alt me-2"></i>Relatório Mensal
-            </a>
-            
-            <li class="nav-item mt-3">
-                <small class="text-uppercase text-muted ms-3">Administração</small>
-            </li>
-            <a class="nav-link" href="#">
-                <i class="fas fa-cog me-2"></i>Configurações
-            </a>
-            <a class="nav-link" href="#">
-                <i class="fas fa-question-circle me-2"></i>Ajuda
             </a>
         </nav>
     </div>
 
     <!-- Conteúdo Principal -->
-    <div class="main-content">
+    <div class="main-content" id="mainContent">
         <!-- Cards de Estatísticas -->
         <div class="row mb-4">
             <div class="col-md-3">
@@ -221,9 +313,6 @@
                             </a>
                             <a class="btn btn-warning" th:href="@{/usuarios/novo}">
                                 <i class="fas fa-user-plus me-1"></i>Novo Usuário
-                            </a>
-                            <a class="btn btn-info" th:href="@{/reports/dashboard}" sec:authorize="hasRole('ADMIN')">
-                                <i class="fas fa-chart-bar me-1"></i>Relatórios
                             </a>
                         </div>
                     </div>
@@ -313,7 +402,7 @@
                                     <small th:text="${entry.key}">Produtor</small>
                                     <small th:text="${entry.value}">0</small>
                                 </div>
-                                <div class="progress" style="height: 5px;">
+                                <div class="progress">
                                     <div class="progress-bar" th:style="'width: ' + ${entry.value / totalPodcasts * 100} + '%;'"></div>
                                 </div>
                             </div>
@@ -357,6 +446,30 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Função para abrir/fechar sidebar em dispositivos móveis
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+        
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+        
+        // Fechar sidebar ao clicar em um link (mobile)
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 992) {
+                    closeSidebar();
+                }
+            });
+        });
+        
         // Ativar tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
