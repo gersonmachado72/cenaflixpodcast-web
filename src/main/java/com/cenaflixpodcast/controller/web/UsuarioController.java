@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import com.cenaflixpodcast.model.Usuario;
 import com.cenaflixpodcast.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -25,7 +26,13 @@ public class UsuarioController {
     }
 
     @GetMapping("/novo")
-    public String showNovoUsuario(Model model) {
+    public String showNovoUsuario(Model model, Authentication auth) {
+        // Verificar se usuário logado tem permissão (apenas ADMIN pode criar novos usuários)
+        Usuario usuarioLogado = usuarioService.buscarPorNome(auth.getName());
+        if (usuarioLogado == null || !"ADMIN".equals(usuarioLogado.getPerfil())) {
+            return "redirect:/dashboard?erro=acesso_negado";
+        }
+        
         model.addAttribute("usuario", new Usuario());
         model.addAttribute("titulo", "Novo Usuário");
         return "usuarios/novo";
@@ -34,7 +41,15 @@ public class UsuarioController {
     @PostMapping("/salvar")
     public String salvarUsuario(@ModelAttribute Usuario usuario,
             @RequestParam("confirmarSenha") String confirmarSenha,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            Authentication auth) {
+        
+        // Verificar permissão (apenas ADMIN pode criar)
+        Usuario usuarioLogado = usuarioService.buscarPorNome(auth.getName());
+        if (usuarioLogado == null || !"ADMIN".equals(usuarioLogado.getPerfil())) {
+            redirectAttributes.addFlashAttribute("erro", "Acesso negado!");
+            return "redirect:/dashboard";
+        }
 
         // Validações básicas
         if (usuario.getNome() == null || usuario.getNome().trim().isEmpty()) {
@@ -82,7 +97,13 @@ public class UsuarioController {
     }
 
     @GetMapping("/listar")
-    public String listarUsuarios(Model model) {
+    public String listarUsuarios(Model model, Authentication auth) {
+        // Verificar permissão (apenas ADMIN pode listar todos)
+        Usuario usuarioLogado = usuarioService.buscarPorNome(auth.getName());
+        if (usuarioLogado == null || !"ADMIN".equals(usuarioLogado.getPerfil())) {
+            return "redirect:/dashboard?erro=acesso_negado";
+        }
+        
         List<Usuario> usuarios = usuarioService.listarTodos();
         model.addAttribute("usuarios", usuarios);
         model.addAttribute("titulo", "Gerenciamento de Usuários");
@@ -90,12 +111,34 @@ public class UsuarioController {
     }
 
     @GetMapping("/editar/{id}")
-    public String editarUsuario(@PathVariable Integer id, Model model) {
-        Usuario usuario = usuarioService.buscarPorId(id);
-        if (usuario == null) {
+    public String editarUsuario(@PathVariable Integer id, Model model, Authentication auth, RedirectAttributes redirectAttributes) {
+        Usuario usuarioLogado = usuarioService.buscarPorNome(auth.getName());
+        Usuario usuarioEditando = usuarioService.buscarPorId(id);
+        
+        if (usuarioLogado == null) {
+            redirectAttributes.addFlashAttribute("erro", "Usuário não encontrado!");
+            return "redirect:/dashboard";
+        }
+        
+        if (usuarioEditando == null) {
+            redirectAttributes.addFlashAttribute("erro", "Usuário não encontrado!");
             return "redirect:/usuarios/listar";
         }
-        model.addAttribute("usuario", usuario);
+        
+        // Verificar permissões:
+        // - ADMIN pode editar qualquer usuário
+        // - EDITOR pode editar apenas a si mesmo
+        // - VISUALIZADOR não pode editar ninguém
+        
+        boolean isAdmin = "ADMIN".equals(usuarioLogado.getPerfil());
+        boolean isEditingSelf = usuarioLogado.getId().equals(id);
+        
+        if (!isAdmin && !isEditingSelf) {
+            redirectAttributes.addFlashAttribute("erro", "Você não tem permissão para editar este usuário!");
+            return "redirect:/dashboard";
+        }
+        
+        model.addAttribute("usuario", usuarioEditando);
         model.addAttribute("titulo", "Editar Usuário");
         return "usuarios/editar";
     }
@@ -105,13 +148,35 @@ public class UsuarioController {
             @ModelAttribute Usuario usuario,
             @RequestParam(value = "senha", required = false) String novaSenha,
             @RequestParam(value = "confirmarSenha", required = false) String confirmarSenha,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            Authentication auth) {
 
         try {
+            Usuario usuarioLogado = usuarioService.buscarPorNome(auth.getName());
             Usuario usuarioExistente = usuarioService.buscarPorId(id);
+            
+            if (usuarioLogado == null) {
+                redirectAttributes.addFlashAttribute("erro", "Usuário não encontrado!");
+                return "redirect:/dashboard";
+            }
+            
             if (usuarioExistente == null) {
                 redirectAttributes.addFlashAttribute("erro", "Usuário não encontrado!");
                 return "redirect:/usuarios/listar";
+            }
+            
+            // Verificar permissão
+            boolean isAdmin = "ADMIN".equals(usuarioLogado.getPerfil());
+            boolean isEditingSelf = usuarioLogado.getId().equals(id);
+            
+            if (!isAdmin && !isEditingSelf) {
+                redirectAttributes.addFlashAttribute("erro", "Acesso negado!");
+                return "redirect:/dashboard";
+            }
+
+            // Se não for ADMIN, não pode alterar o perfil do usuário
+            if (!isAdmin && usuario.getPerfil() != null && !usuario.getPerfil().equals(usuarioExistente.getPerfil())) {
+                usuario.setPerfil(usuarioExistente.getPerfil()); // Mantém o perfil original
             }
 
             // Verificar se email já existe (excluindo o próprio usuário)
@@ -155,7 +220,14 @@ public class UsuarioController {
     }
 
     @GetMapping("/excluir/{id}")
-    public String excluirUsuario(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+    public String excluirUsuario(@PathVariable Integer id, RedirectAttributes redirectAttributes, Authentication auth) {
+        // Apenas ADMIN pode excluir usuários
+        Usuario usuarioLogado = usuarioService.buscarPorNome(auth.getName());
+        if (usuarioLogado == null || !"ADMIN".equals(usuarioLogado.getPerfil())) {
+            redirectAttributes.addFlashAttribute("erro", "Acesso negado!");
+            return "redirect:/dashboard";
+        }
+        
         try {
             usuarioService.excluirUsuario(id);
             redirectAttributes.addFlashAttribute("sucesso", "Usuário excluído com sucesso!");
