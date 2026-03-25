@@ -119,6 +119,27 @@ body {
     border: 1px solid #9ae6b4;
 }
 
+/* ========== PROGRESS BAR ========== */
+.progress {
+    height: 10px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    background-color: #667eea;
+    transition: width 0.1s linear;
+}
+
+/* Largura inicial para a barra de progresso (usada quando valor é 0) */
+.progress-bar.initial {
+    width: 0%;
+}
+
+.progress-bar.bg-secondary {
+    width: 0%;
+    background-color: #e9ecef;
+}
 /* ========== CONTAINER & HEADER ========== */
 .container {
     max-width: 1200px;
