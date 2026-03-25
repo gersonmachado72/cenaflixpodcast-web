@@ -1,12 +1,16 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Relatórios - Cenaflix Podcast</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
 </head>
+</head>
+
 <body>
     <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
@@ -26,8 +30,9 @@
             <div class="card-header">
                 <h4 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Dashboard de Estatísticas</h4>
             </div>
-            
+
             <div class="card-body">
+                <!-- Cards de estatísticas -->
                 <div class="row mb-4">
                     <div class="col-md-3">
                         <div class="card bg-primary text-white">
@@ -72,26 +77,30 @@
                             </div>
                             <div class="card-body">
                                 <div class="list-group">
-                                    <div th:each="produtor : ${stats.topProducers}" 
-                                         class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div th:each="entry : ${stats.topProducersMap}"
+                                        class="list-group-item d-flex justify-content-between align-items-center">
                                         <div>
-                                            <span th:text="${produtor}">Produtor</span>
+                                            <span th:text="${entry.key}">Produtor</span>
                                         </div>
-                                        <span class="badge bg-success" 
-                                              th:text="${stats.podcastsByProducer[produtor]} + ' podcasts'">
+                                        <span class="badge bg-success" th:text="${entry.value} + ' podcasts'">
                                             0 podcasts
                                         </span>
+                                    </div>
+                                    <div th:if="${#maps.isEmpty(stats.topProducersMap)}"
+                                        class="list-group-item text-center text-muted">
+                                        <small>Nenhum produtor encontrado</small>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Estatísticas Mensais -->
                     <div class="col-md-6">
                         <div class="card">
                             <div class="card-header">
-                                <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Estatísticas dos Últimos 6 Meses</h5>
+                                <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Estatísticas dos Últimos 6
+                                    Meses</h5>
                             </div>
                             <div class="card-body">
                                 <div th:if="${not #maps.isEmpty(stats.monthlyStats)}">
@@ -100,9 +109,11 @@
                                             <small th:text="${entry.key}">Mês</small>
                                             <small th:text="${entry.value} + ' podcasts'">0 podcasts</small>
                                         </div>
-                                        <div class="progress" style="height: 8px;">
-                                            <div class="progress-bar" 
-                                                 th:style="'width: ' + ${entry.value / stats.totalPodcasts * 100} + '%;'"></div>
+                                        <div class="progress">
+                                            <div class="progress-bar initial" role="progressbar"
+                                                aria-label="Progresso do podcast" aria-valuenow="0" aria-valuemin="0"
+                                                aria-valuemax="100">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -114,7 +125,7 @@
                     </div>
                 </div>
 
-                <!-- Distribuição por Produtor -->
+                <!-- Distribuição por Produtor - CORREÇÃO DEFINITIVA -->
                 <div class="row mt-4">
                     <div class="col-md-12">
                         <div class="card">
@@ -138,17 +149,22 @@
                                                 <td th:text="${entry.value}">0</td>
                                                 <td>
                                                     <span th:if="${stats.totalPodcasts > 0}">
-                                                        <span th:text="${#numbers.formatDecimal(entry.value / stats.totalPodcasts * 100, 1, 1)} + '%'">0%</span>
+                                                        <!-- CORREÇÃO DEFINITIVA: Converter para double -->
+                                                        <span
+                                                            th:text="${#numbers.formatDecimal((entry.value.doubleValue() / stats.totalPodcasts) * 100, 1, 2)}">0</span>%
                                                     </span>
                                                     <span th:unless="${stats.totalPodcasts > 0}">
                                                         0%
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <div class="progress" style="height: 10px;">
-                                                        <div class="progress-bar" 
-                                                             th:if="${stats.totalPodcasts > 0}"
-                                                             th:style="'width: ' + ${entry.value / stats.totalPodcasts * 100} + '%;'"></div>
+                                                    <div class="progress">
+                                                        <div class="progress-bar" th:if="${stats.totalPodcasts > 0}"
+                                                            th:style="'width: ' + ${(entry.value.doubleValue() / stats.totalPodcasts) * 100} + '%;'">
+                                                        </div>
+                                                        <div class="progress-bar bg-secondary"
+                                                            th:unless="${stats.totalPodcasts > 0}">
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -160,12 +176,12 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="card-footer">
                 <div class="d-flex justify-content-between align-items-center">
                     <small class="text-muted">
                         <i class="fas fa-clock me-1"></i>
-                        Gerado em: <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm:ss')}"></span>
+                        Gerado em: <span th:text="${stats.currentDate}">04/01/2026 10:05:34</span>
                     </small>
                     <a class="btn btn-outline-secondary" href="/dashboard">
                         <i class="fas fa-arrow-left me-1"></i>Voltar ao Dashboard
@@ -177,4 +193,5 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
