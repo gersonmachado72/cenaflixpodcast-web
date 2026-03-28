@@ -25,12 +25,12 @@ public class UsuarioController {
         return "redirect:/usuarios/listar";
     }
 
+    // PÁGINA DE CADASTRO - liberada para todos (não precisa estar logado)
     @GetMapping("/novo")
     public String showNovoUsuario(Model model, Authentication auth) {
-        // Verificar se usuário logado tem permissão (apenas ADMIN pode criar novos usuários)
-        Usuario usuarioLogado = usuarioService.buscarPorNome(auth.getName());
-        if (usuarioLogado == null || !"ADMIN".equals(usuarioLogado.getPerfil())) {
-            return "redirect:/dashboard?erro=acesso_negado";
+        // Se já estiver logado, redireciona para dashboard
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+            return "redirect:/dashboard";
         }
         
         model.addAttribute("usuario", new Usuario());
@@ -38,18 +38,11 @@ public class UsuarioController {
         return "usuarios/novo";
     }
 
+    // SALVAR USUÁRIO - liberado para todos (qualquer um pode se cadastrar)
     @PostMapping("/salvar")
     public String salvarUsuario(@ModelAttribute Usuario usuario,
             @RequestParam("confirmarSenha") String confirmarSenha,
-            RedirectAttributes redirectAttributes,
-            Authentication auth) {
-        
-        // Verificar permissão (apenas ADMIN pode criar)
-        Usuario usuarioLogado = usuarioService.buscarPorNome(auth.getName());
-        if (usuarioLogado == null || !"ADMIN".equals(usuarioLogado.getPerfil())) {
-            redirectAttributes.addFlashAttribute("erro", "Acesso negado!");
-            return "redirect:/dashboard";
-        }
+            RedirectAttributes redirectAttributes) {
 
         // Validações básicas
         if (usuario.getNome() == null || usuario.getNome().trim().isEmpty()) {
@@ -62,7 +55,7 @@ public class UsuarioController {
             return "redirect:/usuarios/novo";
         }
 
-        // Verificar se email já existe (usando existsByEmail que retorna boolean)
+        // Verificar se email já existe
         if (usuarioService.existePorEmail(usuario.getEmail())) {
             redirectAttributes.addFlashAttribute("erro", "Este email já está cadastrado!");
             return "redirect:/usuarios/novo";
@@ -87,18 +80,18 @@ public class UsuarioController {
         try {
             usuarioService.salvarUsuario(usuario);
             redirectAttributes.addFlashAttribute("sucesso",
-                    "Usuário '" + usuario.getNome() + "' cadastrado com sucesso!");
+                    "Usuário '" + usuario.getNome() + "' cadastrado com sucesso! Faça login para continuar.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erro",
                     "Erro ao cadastrar usuário: " + e.getMessage());
         }
 
-        return "redirect:/usuarios/listar";
+        return "redirect:/login";
     }
 
+    // LISTAR USUÁRIOS - apenas ADMIN
     @GetMapping("/listar")
     public String listarUsuarios(Model model, Authentication auth) {
-        // Verificar permissão (apenas ADMIN pode listar todos)
         Usuario usuarioLogado = usuarioService.buscarPorNome(auth.getName());
         if (usuarioLogado == null || !"ADMIN".equals(usuarioLogado.getPerfil())) {
             return "redirect:/dashboard?erro=acesso_negado";
@@ -110,6 +103,7 @@ public class UsuarioController {
         return "usuarios/listar";
     }
 
+    // EDITAR USUÁRIO - ADMIN pode editar qualquer, EDITOR pode editar a si mesmo
     @GetMapping("/editar/{id}")
     public String editarUsuario(@PathVariable Integer id, Model model, Authentication auth, RedirectAttributes redirectAttributes) {
         Usuario usuarioLogado = usuarioService.buscarPorNome(auth.getName());
@@ -125,11 +119,6 @@ public class UsuarioController {
             return "redirect:/usuarios/listar";
         }
         
-        // Verificar permissões:
-        // - ADMIN pode editar qualquer usuário
-        // - EDITOR pode editar apenas a si mesmo
-        // - VISUALIZADOR não pode editar ninguém
-        
         boolean isAdmin = "ADMIN".equals(usuarioLogado.getPerfil());
         boolean isEditingSelf = usuarioLogado.getId().equals(id);
         
@@ -143,6 +132,7 @@ public class UsuarioController {
         return "usuarios/editar";
     }
 
+    // ATUALIZAR USUÁRIO - ADMIN pode atualizar qualquer, EDITOR pode atualizar a si mesmo
     @PostMapping("/atualizar/{id}")
     public String atualizarUsuario(@PathVariable Integer id,
             @ModelAttribute Usuario usuario,
@@ -165,7 +155,6 @@ public class UsuarioController {
                 return "redirect:/usuarios/listar";
             }
             
-            // Verificar permissão
             boolean isAdmin = "ADMIN".equals(usuarioLogado.getPerfil());
             boolean isEditingSelf = usuarioLogado.getId().equals(id);
             
@@ -174,9 +163,9 @@ public class UsuarioController {
                 return "redirect:/dashboard";
             }
 
-            // Se não for ADMIN, não pode alterar o perfil do usuário
+            // Se não for ADMIN, não pode alterar o perfil
             if (!isAdmin && usuario.getPerfil() != null && !usuario.getPerfil().equals(usuarioExistente.getPerfil())) {
-                usuario.setPerfil(usuarioExistente.getPerfil()); // Mantém o perfil original
+                usuario.setPerfil(usuarioExistente.getPerfil());
             }
 
             // Verificar se email já existe (excluindo o próprio usuário)
@@ -200,28 +189,24 @@ public class UsuarioController {
 
                 usuario.setSenha(novaSenha);
             } else {
-                // Manter a senha existente
                 usuario.setSenha(usuarioExistente.getSenha());
             }
 
-            // Manter outros campos
             usuario.setId(id);
             usuario.setCreatedAt(usuarioExistente.getCreatedAt());
 
             usuarioService.salvarUsuario(usuario);
-            redirectAttributes.addFlashAttribute("sucesso",
-                    "Usuário atualizado com sucesso!");
+            redirectAttributes.addFlashAttribute("sucesso", "Usuário atualizado com sucesso!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("erro",
-                    "Erro ao atualizar usuário: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("erro", "Erro ao atualizar usuário: " + e.getMessage());
         }
 
         return "redirect:/usuarios/listar";
     }
 
+    // EXCLUIR USUÁRIO - apenas ADMIN
     @GetMapping("/excluir/{id}")
     public String excluirUsuario(@PathVariable Integer id, RedirectAttributes redirectAttributes, Authentication auth) {
-        // Apenas ADMIN pode excluir usuários
         Usuario usuarioLogado = usuarioService.buscarPorNome(auth.getName());
         if (usuarioLogado == null || !"ADMIN".equals(usuarioLogado.getPerfil())) {
             redirectAttributes.addFlashAttribute("erro", "Acesso negado!");
